@@ -38,7 +38,6 @@ public final class DataPreprocessing {
             records = null;
 
             // mark the end of input stream
-            fileWriter.append("99999999999,999999999,999999999,2050-01-01 00:00:00\n");
             fileWriter.close();
 
         } catch (IOException e) {

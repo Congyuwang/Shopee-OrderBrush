@@ -38,7 +38,6 @@ public final class DataPreprocessingReversed {
             records = null;
 
             // mark the end of input stream
-            fileWriter.append("99999999999,999999999,999999999,1950-01-01 00:00:00\n");
             fileWriter.close();
 
         } catch (IOException e) {

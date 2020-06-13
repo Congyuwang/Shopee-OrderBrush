@@ -133,6 +133,16 @@ public final class OrderBrushOrderReversed {
 
         // find suspicious user for each shop
         for (ShopInfo info : shopList.getShopInfo()) {
+            // finish the remaining
+            if (info.isPreviousBrushOrder) {
+                info.isPreviousBrushOrder = false;
+                for (Record r : info.recentRecords) {
+                    Integer count = info.suspiciousTransactionCount.get(r.userId);
+                    info.suspiciousTransactionCount.put(r.userId, count + 1);
+                }
+                info.recentRecords.clear();
+            }
+
             int max = 0;
             tempSet.clear();
             for (Integer count : info.suspiciousTransactionCount.values()) {
