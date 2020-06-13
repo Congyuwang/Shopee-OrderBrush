@@ -30,7 +30,7 @@ public final class DataPreprocessing {
 
             // write into ordered log file
             FileWriter fileWriter = new FileWriter(orderedOrder);
-            fileWriter.write("orderid,shopid,userid,event_time");
+            fileWriter.write("orderid,shopid,userid,event_time\n");
             for (Record record : records) {
                 fileWriter.append(String.format("%d,%d,%d,%s\n", record.orderId, record.shopId, record.userId,
                         OrderBrushOrder.DATE_FORMAT.format(record.eventTime)));
@@ -38,7 +38,7 @@ public final class DataPreprocessing {
             records = null;
 
             // mark the end of input stream
-            fileWriter.append("99999999999,999999999,999999999,2050-01-01 00:00:00");
+            fileWriter.append("99999999999,999999999,999999999,2050-01-01 00:00:00\n");
             fileWriter.close();
 
         } catch (IOException e) {
