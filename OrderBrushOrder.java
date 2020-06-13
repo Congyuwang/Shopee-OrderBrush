@@ -99,12 +99,12 @@ public final class OrderBrushOrder {
     /**
      * Calculate the concentration within the recentTransactions
      */
-    private static final double concentration(PriorityQueue<Record> recentRecords) {
+    private static final int concentration(PriorityQueue<Record> recentRecords) {
         HashSet<Long> users = new HashSet<>();
         for (Record r : recentRecords) {
             users.add(r.userId);
         }
-        return (double) recentRecords.size() / users.size();
+        return recentRecords.size() / users.size();
     }
 
     /**
