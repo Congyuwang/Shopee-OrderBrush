@@ -35,6 +35,9 @@ public class TestClient {
             // write the output
             outputWriter.write("shopid,userid\n");
             for (Long shopId : suspiciousShopUser.keySet()) {
+                if (shopId == 999_999_999L) {
+                    continue;
+                }
                 outputWriter.append(shopId.toString());
                 outputWriter.append(',');
                 if (suspiciousShopUser.get(shopId).length == 0) {
