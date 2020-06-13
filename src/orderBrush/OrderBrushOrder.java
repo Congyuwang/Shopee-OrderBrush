@@ -103,11 +103,11 @@ public final class OrderBrushOrder {
      */
     private static final int concentration(PriorityQueue<Record> recentRecords) {
         HashSet<Long> users = new HashSet<>();
-        if (users.size() == 0) {
-            return 0;
-        }
         for (Record r : recentRecords) {
             users.add(r.userId);
+        }
+        if (users.size() == 0) {
+            return 0;
         }
         return recentRecords.size() / users.size();
     }

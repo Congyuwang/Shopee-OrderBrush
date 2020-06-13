@@ -6,6 +6,20 @@
     "configurations": [
         {
             "type": "java",
+            "name": "CodeLens (Launch) - TestClient",
+            "request": "launch",
+            "mainClass": "TestClient",
+            "projectName": "Shopee_9519731e"
+        },
+        {
+            "type": "java",
+            "name": "CodeLens (Launch) - DataPreprocessing",
+            "request": "launch",
+            "mainClass": "DataPreprocessing",
+            "projectName": "Shopee_9519731e"
+        },
+        {
+            "type": "java",
             "name": "CodeLens (Launch) - DataPreprocessingReversed",
             "request": "launch",
             "mainClass": "DataPreprocessingReversed",

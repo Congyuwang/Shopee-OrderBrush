@@ -52,7 +52,7 @@ public final class OrderBrushOrderReversed {
          */
         public final void update(Record record) {
 
-            final Date oneHourFuture = new Date(record.eventTime.getTime() - ONE_HOUR);
+            final Date oneHourFuture = new Date(record.eventTime.getTime() + ONE_HOUR);
 
             // get shopInfo and add new transaction
             if (!shopList.containsKey(record.shopId)) {
@@ -104,11 +104,11 @@ public final class OrderBrushOrderReversed {
      */
     private static final int concentration(PriorityQueue<Record> recentRecords) {
         HashSet<Long> users = new HashSet<>();
-        if (users.size() == 0) {
-            return 0;
-        }
         for (Record r : recentRecords) {
             users.add(r.userId);
+        }
+        if (users.size() == 0) {
+            return 0;
         }
         return recentRecords.size() / users.size();
     }
