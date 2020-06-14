@@ -34,6 +34,7 @@ def dictionary_writer(shop_users: dict, path: str, filename: str):
                     if count != 0:
                         f.write("&")
                     f.write(str(user))
+                    count += 1
             f.write("\n")
 
 
