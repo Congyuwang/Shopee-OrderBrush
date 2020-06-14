@@ -9,6 +9,26 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.PriorityQueue;
 
+/**
+ * OrderBrushOrder is a lazy execution package for detecting order brushing.
+ * When a new transaction occurs, the package reviews recent transaction
+ * records, and calculate recent transaction concentration (orders / users). if
+ * this number is greater or equal to 3, related transactions are deemed as
+ * suspicious order brushing transactions.
+ * <p>
+ * The class has two main APIs:
+ * <ul>
+ * <li>{@code void processNewRecord(String recordLine)} is invoked when a new
+ * transaction occurs. Pass transaction record OrderId, ShopId, UserId, and
+ * transaction time {@code (YYYY-MM-dd HH:mm:ss)} as a string separated by
+ * commas to method {@code processNewRecord()} to update the system.</li>
+ * <li>Use {@code HashMap<Long, Long[]> getSuspiciousShopUser()} to retrieve
+ * suspicious shopId and userId. The structure of the returned hashMap is is a
+ * mapping from ShopId to an array of suspicious UserId. If the shop has no
+ * suspicious transactions, corresponding the array is empty.</li>
+ * </ul>
+ * </p>
+ */
 public final class OrderBrushOrder {
 
     public static final long ONE_HOUR = 1000 * 60 * 60;

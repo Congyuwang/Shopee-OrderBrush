@@ -4,7 +4,8 @@ import java.util.Comparator;
 import java.util.Date;
 
 /**
- * the data the records a single transaction
+ * This class is used for recording transaction records. It records orderId,
+ * shopId, userId and eventTime, and also provides different comparators.
  */
 public final class Record {
     public final long orderId;

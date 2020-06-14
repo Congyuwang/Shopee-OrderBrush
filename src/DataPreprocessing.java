@@ -8,7 +8,9 @@ import orderBrush.OrderBrushOrder;
 import orderBrush.Record;
 
 /**
- * sort the events and write to new file (only need to be processed once)
+ * Sort the events and write to new file (only need to be processed once). The
+ * purpose of the sorting is to simulate actual transaction scene, since actual
+ * transactions happen in time order.
  */
 public final class DataPreprocessing {
     public static void main(String[] args) {

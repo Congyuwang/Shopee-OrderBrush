@@ -6,6 +6,11 @@ import java.util.Scanner;
 import java.util.HashMap;
 import orderBrush.OrderBrushOrder;
 
+/**
+ * The TestClient simulate actual transactions scenes, it feeds the
+ * orderBrushOrder class with new transaction records in time order, and export
+ * the suspicious transaction to output.csv file.
+ */
 public class TestClient {
 
     public static void main(String[] args) {
