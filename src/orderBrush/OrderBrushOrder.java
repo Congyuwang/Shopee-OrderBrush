@@ -48,7 +48,7 @@ public final class OrderBrushOrder {
         PriorityQueue<Record> lastOneHour = new PriorityQueue<>(Record.TIME_COMPARATOR);
 
         // fields to aid computation:
-        // clock records the latest algorithm scam position for each shop
+        // clock records the latest algorithm scan position for each shop
         Date clock = null;
         // isPreviousBrushOrder determines whether order-brushing is on-going
         boolean isPreviousBrushOrder = false;
@@ -214,10 +214,10 @@ public final class OrderBrushOrder {
      */
     public static Record parseLine(String line) throws ParseException {
         String[] temp = line.split(",");
-        long orderId = Long.parseLong(temp[0]);
-        long shopId = Long.parseLong(temp[1]);
-        long userId = Long.parseLong(temp[2]);
-        Date eventTime = DATE_FORMAT.parse(temp[3]);
+        long orderId = Long.parseLong(temp[0].strip());
+        long shopId = Long.parseLong(temp[1].strip());
+        long userId = Long.parseLong(temp[2].strip());
+        Date eventTime = DATE_FORMAT.parse(temp[3].strip());
         return new Record(orderId, shopId, userId, eventTime);
     }
 }
