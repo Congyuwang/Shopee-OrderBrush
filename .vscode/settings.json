@@ -2,6 +2,8 @@
     "cSpell.words": [
         "orderid",
         "shopid",
+        "tolist",
         "userid"
-    ]
+    ],
+    "python.pythonPath": "/Users/congyuwang/opt/miniconda3/bin/python"
 }
