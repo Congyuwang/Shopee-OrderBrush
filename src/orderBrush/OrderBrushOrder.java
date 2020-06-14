@@ -26,6 +26,11 @@ public final class OrderBrushOrder {
         // recent transactions
         PriorityQueue<Record> recentRecords = new PriorityQueue<>(Record.TIME_COMPARATOR);
         PriorityQueue<Record> lastOneHour = new PriorityQueue<>(Record.TIME_COMPARATOR);
+
+        // fields to aid computation:
+        // clock records the latest algorithm scam position for each shop
+        Date clock = null;
+        // isPreviousBrushOrder determines whether order-brushing is on-going
         boolean isPreviousBrushOrder = false;
 
         // map from userId to number of suspicious transactions
@@ -58,38 +63,63 @@ public final class OrderBrushOrder {
                 shopList.put(record.shopId, new ShopInfo(record.shopId));
             }
             ShopInfo info = shopList.get(record.shopId);
-            info.recentRecords.add(record);
-            info.lastOneHour.add(record);
             if (!info.suspiciousTransactionCount.containsKey(record.userId)) {
                 info.suspiciousTransactionCount.put(record.userId, 0);
             }
 
+            if (info.clock == null) {
+                info.recentRecords.add(record);
+                info.lastOneHour.add(record);
+                info.clock = oneHourBefore;
+                return;
+            }
+
+            // scan and advance time to latest event
+            boolean needsRecalculate[] = new boolean[] {false};
+            while (info.clock.compareTo(oneHourBefore) < 0) {
+                info.clock = new Date(info.clock.getTime() + 1000);
+                core(info, record, needsRecalculate, false);
+            }
+
+            // add new record and recalculate
+            info.recentRecords.add(record);
+            info.lastOneHour.add(record);
+            needsRecalculate[0] = true;
+            core(info, record, needsRecalculate, true);
+        }
+
+        private void core(ShopInfo info, Record record, boolean[] needsRecalculate, boolean newRecordAdded) {
             // keep records if brush detected
             if (!info.isPreviousBrushOrder) {
-                while (!info.recentRecords.isEmpty()
-                        && info.recentRecords.peek().eventTime.compareTo(oneHourBefore) < 0) {
+                while (!info.recentRecords.isEmpty() && info.recentRecords.peek().eventTime.compareTo(info.clock) < 0) {
                     info.recentRecords.remove();
                 }
             }
 
             // remove old transactions from lastOneHour
-            while (!info.lastOneHour.isEmpty() && info.lastOneHour.peek().eventTime.compareTo(oneHourBefore) < 0) {
+            while (!info.lastOneHour.isEmpty() && info.lastOneHour.peek().eventTime.compareTo(info.clock) < 0) {
                 info.lastOneHour.remove();
+                needsRecalculate[0] = true;
             }
 
             // record suspicious activity
-            if (concentration(info.lastOneHour) >= 3) {
-                info.isPreviousBrushOrder = true;
-            } else if (info.isPreviousBrushOrder) {
-                info.isPreviousBrushOrder = false;
-                for (Record r : info.recentRecords) {
-                    if (!r.equals(record)) {
-                        Integer count = info.suspiciousTransactionCount.get(r.userId);
-                        info.suspiciousTransactionCount.put(r.userId, count + 1);
+            if (needsRecalculate[0]) {
+                if (concentration(info.lastOneHour) >= 3) {
+                    info.isPreviousBrushOrder = true;
+                } else if (info.isPreviousBrushOrder) {
+                    info.isPreviousBrushOrder = false;
+                    for (Record r : info.recentRecords) {
+                        if (!newRecordAdded || !r.equals(record)) {
+                            Integer count = info.suspiciousTransactionCount.get(r.userId);
+                            info.suspiciousTransactionCount.put(r.userId, count + 1);
+                        }
+                    }
+                    info.recentRecords.clear();
+                    if (newRecordAdded) {
+                        info.recentRecords.add(record);
                     }
                 }
-                info.recentRecords.clear();
-                info.recentRecords.add(record);
+                needsRecalculate[0] = false;
             }
         }
 
