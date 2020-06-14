@@ -12,7 +12,7 @@ implementation using numpy library.
 
 The java version has a score of 99.508%.
 
-The python version has a score of 88.214%.
+The python version has a score of 89.933%.
 
 ## OrderBrushOrder
 
