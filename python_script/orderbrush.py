@@ -1,30 +1,50 @@
+"""
+Created on Sun Jun 14 10:30:17 2020
+
+@author: congyuwang
+"""
+
 import numpy as np
 
 
 class Orderbrush:
-    '''
-    orderbrush(transactionData) accepts a numpy ndarray with four columns:
-    0:orderId, 1:shopId, 2:userId, 3:event_time.
-    It returns a dictionary of shopId -> (suspicious users)
-    the tuple of users suspicious of brushing orders.
-    If the shop is not suspicious of brushing orders, then shopId -> None.
-    '''
 
     ONE_HOUR = 3600
 
     def __init__(self, transactionData: np.ndarray):
-        '''
-        feed in the transactions data with four columns in ndarray class:
-        0:orderId, 1:shopId, 2:userId, 3:event_time.
-        '''
+        """
+        Orderbrush(transactionData) accepts a numpy ndarray with four columns:
+            ``0:orderId, 1:shopId, 2:userId, 3:event_time``
+
+        It returns returns a dictionary of shopId as key, and a tuple of suspicious
+        users related to this shop as value. If the shop is not suspicious of
+        brushing orders, the value is None.
+
+        Attributes:
+            ``ONE_HOUR``: is a constant that represents the number of seconds in an hour.
+
+        Constructor:
+            an instance of the class must be initialized with an ndarray of four columns.
+
+        Method:
+            ``get_suspicious_shop_users()`` returns a dictionary of shopId as key,
+            and a tuple of suspicious users related to this shop as value.
+
+        Example:
+        ::
+
+            transactionData = pd.read_csv("data.csv").to_numpy()
+            Orderbrush ob = new Orderbrush(transactionData)
+            suspicious_shops_and_users: dict = ob.get_suspicious_shop_users()
+
+        """
         assert transactionData.shape[1] == 4
         self.__data: np.ndarray = transactionData.copy()
         self.__data = self.__data[np.argsort(self.__data[:, 3])]
         self.__UNIQUE_SHOP_ID: np.ndarray = np.unique(transactionData[:, 1])
-        self.TESTSHOPID = 0
 
     def __get_shop_transaction__(self, shopId: np.int64) -> np.ndarray:
-        '''
+        """
         Get the transactions of a particular shop
 
         Parameters
@@ -37,20 +57,20 @@ class Orderbrush:
         np.ndarray
             Three columns: 0:orderId, 1:userId and 2:event_time of a specific shop.
 
-        '''
+        """
         # get all transactions of the shop
         return self.__data[self.__data[:, 1] == shopId, :][:, [0, 2, 3]]
 
     def __single_concentration__(self, userId: np.ndarray) -> np.int64:
-        '''
+        """
         a simple function calculates the concentration of a userId array
-        '''
+        """
         if userId.shape[0] == 0:
             return 0.0
         return np.floor(userId.shape[0] / np.unique(userId).shape[0])
 
     def __concentration__(self, transactions: np.ndarray) -> np.ndarray:
-        '''
+        """
         calculate concentrations for every transaction of a shop
 
 
@@ -66,7 +86,7 @@ class Orderbrush:
             Returns an array of concentrations
             Four columns: 0:orderId, 1:userId, 2:concentration and 3:event_time.
 
-        '''
+        """
         assert transactions.shape[1] == 3
         event_time: np.ndarray = transactions[:, 2].flatten()
         length: int = transactions.shape[0]
@@ -84,7 +104,8 @@ class Orderbrush:
             nextHour = np.logical_and(
                 event_time >= t, event_time <= (t + Orderbrush.ONE_HOUR))
             userId: np.ndarray = transactions[nextHour, 1]
-            concentration_rate: np.int64 = self.__single_concentration__(userId)
+            concentration_rate: np.int64 = self.__single_concentration__(
+                userId)
 
             ## write 0:orderId, 1:userId, 2:concentration and 3:event_time
             concentrations[i] = [record[0], record[1], concentration_rate, t]
@@ -93,7 +114,7 @@ class Orderbrush:
         return concentrations
 
     def __get_suspicious_orders__(self, transactions: np.ndarray) -> list:
-        '''
+        """
         get suspicious orders from the transaction records of a particular shop
 
 
@@ -108,13 +129,11 @@ class Orderbrush:
         list
             List of suspicious orders: (orderId, userId) tuples for a specific shop.
 
-        '''
+        """
         assert transactions.shape[1] == 3
 
         # get concentration (variable: cons)
         cons: np.ndarray = self.__concentration__(transactions)
-        if self.TESTSHOPID == 51487211:
-            print(cons)
         event_time: np.ndarray = cons[:, 3]
 
         # record suspicious_orders in a set
@@ -150,7 +169,7 @@ class Orderbrush:
         return list(suspicious_orders)
 
     def get_suspicious_shop_users(self) -> dict:
-        '''
+        """
         retrieve shopId and their suspicious userId
 
 
@@ -160,12 +179,10 @@ class Orderbrush:
             Set of suspicious shop and users in a dictionary {shopId : (userId1, userId2)}
             or {shopId : None} if no suspicious transaction detected.
 
-        '''
+        """
         shopList: dict = dict()
 
         for shopId in self.__UNIQUE_SHOP_ID:
-
-            self.TESTSHOPID = shopId
 
             # get suspicious orders
             orders: np.ndarray = self.__get_shop_transaction__(shopId)
@@ -179,7 +196,8 @@ class Orderbrush:
             suspicious = np.array(bad_order, dtype=np.int64)
 
             # count number of suspicious transactions for each user
-            countUnique = np.unique(suspicious[:, 1].flatten(), return_counts=True)
+            countUnique = np.unique(
+                suspicious[:, 1].flatten(), return_counts=True)
             users: np.ndarray = countUnique[0]
             counts: np.ndarray = countUnique[1]
 

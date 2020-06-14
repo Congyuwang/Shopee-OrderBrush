@@ -9,16 +9,20 @@ Created on Sun Jun 14 09:25:17 2020
 # %% import packages and data
 import pandas as pd
 import numpy as np
+import os
 from orderbrush import Orderbrush as ob
 
 # %% define a CSV writer
 
 
-def dictionary_writer(shop_users: dict, path: str):
-    '''
+def dictionary_writer(shop_users: dict, path: str, filename: str):
+    """
     pass a dictionary, write the data into CSV as required.
-    '''
-    with open(path, "w") as f:
+    """
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    with open(path + filename, "w") as f:
         f.write("shopid,userid\n")
         for shopId, users in shop_users.items():
             f.write(str(shopId) + ",")
@@ -50,4 +54,4 @@ orderBrush: ob = ob(data)
 suspicious_shop_users: dict = orderBrush.get_suspicious_shop_users()
 
 # %% write the result
-dictionary_writer(suspicious_shop_users, "python_output.csv")
+dictionary_writer(suspicious_shop_users, "out/", "python_output.csv")
