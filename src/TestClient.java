@@ -15,7 +15,13 @@ public class TestClient {
 
     public static void main(String[] args) {
         File orderedOrder = new File("data/ordered_order.csv");
-        File output = new File("output.csv");
+        File outputPath = new File("out/");
+        if (!outputPath.exists()) {
+            if (outputPath.mkdir()) {
+                System.out.println("output folder created.");
+            }
+        }
+        File output = new File("out/output.csv");
         OrderBrushOrder orderBrushOrder = new OrderBrushOrder();
 
         try {
