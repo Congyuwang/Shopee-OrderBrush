@@ -7,7 +7,8 @@ import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.PriorityQueue;
+import java.util.ArrayDeque;
+import java.util.Queue;
 
 /**
  * OrderBrushOrder is a lazy execution package for detecting order brushing.
@@ -40,24 +41,36 @@ public final class OrderBrushOrder {
      * Information of shops including shop id, recent transactions, and number of
      * suspicious Transactions related to each user.
      */
-    private final class ShopInfo {
+    private final class Shop {
+
         long shopId;
+        private ArrayDeque<Record> internalRecords = new ArrayDeque<>();
 
-        // recent transactions
-        PriorityQueue<Record> recentRecords = new PriorityQueue<>(Record.TIME_COMPARATOR);
-        PriorityQueue<Record> lastOneHour = new PriorityQueue<>(Record.TIME_COMPARATOR);
-
-        // fields to aid computation:
-        // clock records the latest algorithm scan position for each shop
+        // recent transaction records
+        Queue<Record> recentRecords = internalRecords;
+        // clock records the scan position (always one hour before latest transaction time)
         Date clock = null;
         // isPreviousBrushOrder determines whether order-brushing is on-going
         boolean isPreviousBrushOrder = false;
-
         // map from userId to number of suspicious transactions
         HashMap<Long, Integer> suspiciousTransactionCount = new HashMap<>();
+        // number of orders last hour, calculate concentration only when this number changes
+        int numberOfOrdersLastHour = 0;
 
-        ShopInfo(long id) {
+        Shop(long id) {
             shopId = id;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public Shop clone() {
+            Shop shopCopy = new Shop(shopId);
+            shopCopy.recentRecords = internalRecords.clone();
+            shopCopy.clock = clock;
+            shopCopy.isPreviousBrushOrder = isPreviousBrushOrder;
+            shopCopy.suspiciousTransactionCount = (HashMap<Long, Integer>) suspiciousTransactionCount.clone();
+            shopCopy.numberOfOrdersLastHour = numberOfOrdersLastHour;
+            return shopCopy;
         }
     }
 
@@ -67,7 +80,7 @@ public final class OrderBrushOrder {
     private final class ShopList {
 
         // from shopId to shopInfo
-        HashMap<Long, ShopInfo> shopList = new HashMap<>();
+        HashMap<Long, Shop> shopList = new HashMap<>();
 
         /**
          * the main method to update the suspicious list
@@ -76,90 +89,146 @@ public final class OrderBrushOrder {
          */
         public final void update(Record record) {
 
+            // calculate one hour before the transaction time
             final Date oneHourBefore = new Date(record.eventTime.getTime() - ONE_HOUR);
 
-            // get shopInfo and add new transaction
+            // initialize if this is a new shop to the list
             if (!shopList.containsKey(record.shopId)) {
-                shopList.put(record.shopId, new ShopInfo(record.shopId));
-            }
-            ShopInfo info = shopList.get(record.shopId);
-            if (!info.suspiciousTransactionCount.containsKey(record.userId)) {
-                info.suspiciousTransactionCount.put(record.userId, 0);
+                shopList.put(record.shopId, new Shop(record.shopId));
             }
 
-            if (info.clock == null) {
-                info.recentRecords.add(record);
-                info.lastOneHour.add(record);
-                info.clock = oneHourBefore;
+            // initialize if this is a new user to the shop
+            Shop shop = shopList.get(record.shopId);
+            if (!shop.suspiciousTransactionCount.containsKey(record.userId)) {
+                shop.suspiciousTransactionCount.put(record.userId, 0);
+            }
+            if (shop.clock == null) {
+                shop.recentRecords.add(record);
+                shop.clock = oneHourBefore;
                 return;
             }
 
-            // scan and advance time to latest event
-            boolean needsRecalculate[] = new boolean[] {false};
-            while (info.clock.compareTo(oneHourBefore) < 0) {
-                info.clock = new Date(info.clock.getTime() + 1000);
-                core(info, record, needsRecalculate, false);
+            // scan forward to detect high concentration till latest time
+            while (shop.clock.compareTo(oneHourBefore) < 0) {
+                shop.clock = new Date(shop.clock.getTime() + 1000);
+                detect(shop, record, false);
             }
 
-            // add new record and recalculate
-            info.recentRecords.add(record);
-            info.lastOneHour.add(record);
-            needsRecalculate[0] = true;
-            core(info, record, needsRecalculate, true);
+            // add new record and detect again
+            shop.recentRecords.add(record);
+            shop.numberOfOrdersLastHour++;
+            detect(shop, record, true);
         }
 
-        private void core(ShopInfo info, Record record, boolean[] needsRecalculate, boolean newRecordAdded) {
-            // keep records if brush detected
-            if (!info.isPreviousBrushOrder) {
-                while (!info.recentRecords.isEmpty() && info.recentRecords.peek().eventTime.compareTo(info.clock) < 0) {
-                    info.recentRecords.remove();
+        /**
+         * called when one of the two things happens: either a new record is added into
+         * recentRecords, or clock advance by one second.
+         */
+        private void detect(Shop shop, Record record, boolean newRecordAdded) {
+
+            // if this is a clock advancement event (no new record added):
+            // 1. remove unnecessary records from recentRecords.
+            // 2. if the orders in the last hour does not change, return.
+            if (!newRecordAdded) {
+
+                // Remove records that are older than one hour if order-brushing is not going
+                // on, but keep all records when order-brushing is going on.
+                if (!shop.isPreviousBrushOrder) {
+                    while (!shop.recentRecords.isEmpty()
+                            && shop.recentRecords.peek().eventTime.compareTo(shop.clock) < 0) {
+                        shop.recentRecords.remove();
+                    }
                 }
-            }
 
-            // remove old transactions from lastOneHour
-            while (!info.lastOneHour.isEmpty() && info.lastOneHour.peek().eventTime.compareTo(info.clock) < 0) {
-                info.lastOneHour.remove();
-                needsRecalculate[0] = true;
-            }
-
-            // record suspicious activity
-            if (needsRecalculate[0]) {
-                if (concentration(info.lastOneHour) >= 3) {
-                    info.isPreviousBrushOrder = true;
-                } else if (info.isPreviousBrushOrder) {
-                    info.isPreviousBrushOrder = false;
-                    for (Record r : info.recentRecords) {
-                        if (!newRecordAdded || !r.equals(record)) {
-                            Integer count = info.suspiciousTransactionCount.get(r.userId);
-                            info.suspiciousTransactionCount.put(r.userId, count + 1);
+                // calculate numberOfOrdersLastHour
+                int numberOfOrdersLastHour = 0;
+                if (shop.recentRecords.isEmpty() || shop.recentRecords.peek().eventTime.compareTo(shop.clock) >= 0) {
+                    numberOfOrdersLastHour = shop.recentRecords.size();
+                } else {
+                    int numberOfOutdatedOrders = 0;
+                    for (Record r : shop.recentRecords) {
+                        if (r.eventTime.compareTo(shop.clock) >= 0) {
+                            break;
                         }
+                        numberOfOutdatedOrders++;
                     }
-                    info.recentRecords.clear();
-                    if (newRecordAdded) {
-                        info.recentRecords.add(record);
-                    }
+                    numberOfOrdersLastHour = shop.recentRecords.size() - numberOfOutdatedOrders;
                 }
-                needsRecalculate[0] = false;
+
+                // If number of orders last hour does not change, there is no need for
+                // recalculation since the concentration does not change, as clock-advance
+                // does not insert new records into recentRecords.
+                if (numberOfOrdersLastHour == shop.numberOfOrdersLastHour) {
+                    return;
+                } else {
+                    // update shop.numberOfOrdersLastHour
+                    shop.numberOfOrdersLastHour = numberOfOrdersLastHour;
+                }
+            }
+
+            // calculate concentration of the shop.
+            // if the concentration >= 3, enter isPreviousBrushOrder = true period
+            if (concentration(shop) >= 3) {
+                shop.isPreviousBrushOrder = true;
+                return;
+            }
+
+            // Else if concentration < 3, but previous concentration > 3, an order-brushing
+            // period has just ended, record all suspicious activities.
+            if (shop.isPreviousBrushOrder) {
+                for (Record r : shop.recentRecords) {
+                    // skip new record since it is not order-brushing
+                    if (newRecordAdded && r.equals(record)) {
+                        continue;
+                    }
+                    // increment suspicious action for corresponding users
+                    Integer count = shop.suspiciousTransactionCount.get(r.userId);
+                    shop.suspiciousTransactionCount.put(r.userId, count + 1);
+                }
+                shop.recentRecords.clear();
+                // add new record back
+                if (newRecordAdded) shop.recentRecords.add(record);
+                // reset isPreviousBrushOrder
+                shop.isPreviousBrushOrder = false;
             }
         }
 
-        public final Collection<ShopInfo> getShopInfo() {
+        public final Collection<Shop> getShopInfo() {
             return shopList.values();
+        }
+
+        /**
+         * make a deep copy of ShopList, used for query
+         */
+        @Override
+        public ShopList clone() {
+            ShopList shopListCopy = new ShopList();
+            for (Shop shop : shopList.values()) {
+                shopListCopy.shopList.put(shop.shopId, shop.clone());
+            }
+            return shopListCopy;
         }
     }
 
     /**
-     * Calculate the concentration within the recentTransactions
+     * Calculate the concentration of last hour (time indicated by shop.clock).
      */
-    private static final int concentration(PriorityQueue<Record> recentRecords) {
+    private static final int concentration(Shop shop) {
         HashSet<Long> users = new HashSet<>();
+        final Queue<Record> recentRecords = shop.recentRecords;
+        final Date clock = shop.clock;
+        assert clock != null;
+        int transactionThisHour = 0;
         for (Record r : recentRecords) {
-            users.add(r.userId);
+            if (clock.compareTo(r.eventTime) <= 0) {
+                users.add(r.userId);
+                transactionThisHour++;
+            }
         }
         if (users.size() == 0) {
             return 0;
         }
-        return recentRecords.size() / users.size();
+        return transactionThisHour / users.size();
     }
 
     /**
@@ -177,34 +246,41 @@ public final class OrderBrushOrder {
      * @return a {@code Hashmap} from shopId to an array containing suspicious users
      */
     public final HashMap<Long, Long[]> getSuspiciousShopUser() {
-        HashMap<Long, Long[]> suspiciousShopUser = new HashMap<>();
-        TreeSet<Long> tempSet = new TreeSet<>();
 
-        // find suspicious user for each shop
-        for (ShopInfo info : shopList.getShopInfo()) {
+        final HashMap<Long, Long[]> suspiciousShopUser = new HashMap<>();
+
+        // a temporary container used repeatedly.
+        final TreeSet<Long> tempSet = new TreeSet<>();
+
+        // Must use a deep copy of shopList because this flushes the recentRecords
+        // earlier than possible should be.
+        for (Shop shop : shopList.clone().getShopInfo()) {
             // finish the remaining
-            if (info.isPreviousBrushOrder) {
-                info.isPreviousBrushOrder = false;
-                for (Record r : info.recentRecords) {
-                    Integer count = info.suspiciousTransactionCount.get(r.userId);
-                    info.suspiciousTransactionCount.put(r.userId, count + 1);
+            if (shop.isPreviousBrushOrder) {
+                shop.isPreviousBrushOrder = false;
+                for (Record r : shop.recentRecords) {
+                    Integer count = shop.suspiciousTransactionCount.get(r.userId);
+                    shop.suspiciousTransactionCount.put(r.userId, count + 1);
                 }
-                info.recentRecords.clear();
+                shop.recentRecords.clear();
             }
 
+            // find the maximum order brushing number among users
             int max = 0;
-            tempSet.clear();
-            for (Integer count : info.suspiciousTransactionCount.values()) {
+            for (Integer count : shop.suspiciousTransactionCount.values()) {
                 if (count > max) {
                     max = count;
-                };
-            }
-            if (max > 0) {
-                for (Long userId : info.suspiciousTransactionCount.keySet()) {
-                    if (info.suspiciousTransactionCount.get(userId) == max) tempSet.add(userId);
                 }
             }
-            suspiciousShopUser.put(info.shopId, tempSet.toArray(new Long[tempSet.size()]));
+
+            // get usersId and put in ascending order
+            tempSet.clear();
+            if (max > 0) {
+                for (Long userId : shop.suspiciousTransactionCount.keySet()) {
+                    if (shop.suspiciousTransactionCount.get(userId) == max) tempSet.add(userId);
+                }
+            }
+            suspiciousShopUser.put(shop.shopId, tempSet.toArray(new Long[tempSet.size()]));
         }
         return suspiciousShopUser;
     }
