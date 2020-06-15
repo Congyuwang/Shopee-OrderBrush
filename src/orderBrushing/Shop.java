@@ -23,8 +23,8 @@ final class Shop {
     // isPreviousBrushOrder determines whether order-brushing is on-going
     boolean isPreviousBrushOrder = false;
 
-    // map from userId to number of suspicious transactions
-    HashMap<Long, Integer> suspiciousTransactionCount = new HashMap<>();
+    // map from userId to number of suspicious transactions involved
+    HashMap<Long, Integer> suspiciousUsers = new HashMap<>();
 
     // number of orders last hour
     int numberOfOrdersLastHour = 0;
@@ -40,7 +40,7 @@ final class Shop {
         shopCopy.recentRecords = internalRecords.clone();
         shopCopy.clock = clock;
         shopCopy.isPreviousBrushOrder = isPreviousBrushOrder;
-        shopCopy.suspiciousTransactionCount = (HashMap<Long, Integer>) suspiciousTransactionCount.clone();
+        shopCopy.suspiciousUsers = (HashMap<Long, Integer>) suspiciousUsers.clone();
         shopCopy.numberOfOrdersLastHour = numberOfOrdersLastHour;
         return shopCopy;
     }

@@ -31,12 +31,7 @@ final class ShopList {
         if (!shopList.containsKey(record.shopId)) {
             shopList.put(record.shopId, new Shop(record.shopId));
         }
-
-        // initialize if this is a new user to the shop
         Shop shop = shopList.get(record.shopId);
-        if (!shop.suspiciousTransactionCount.containsKey(record.userId)) {
-            shop.suspiciousTransactionCount.put(record.userId, 0);
-        }
         if (shop.clock == null) {
             shop.recentRecords.add(record);
             shop.clock = oneHourBefore;
@@ -117,8 +112,12 @@ final class ShopList {
                     continue;
                 }
                 // increment suspicious action for corresponding users
-                Integer count = shop.suspiciousTransactionCount.get(r.userId);
-                shop.suspiciousTransactionCount.put(r.userId, count + 1);
+                if (!shop.suspiciousUsers.containsKey(record.userId)) {
+                    shop.suspiciousUsers.put(r.userId, 1);
+                } else {
+                    Integer count = shop.suspiciousUsers.get(r.userId);
+                    shop.suspiciousUsers.put(r.userId, count + 1);
+                }
             }
             shop.recentRecords.clear();
             // add new record back

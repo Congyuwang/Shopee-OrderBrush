@@ -67,15 +67,19 @@ public final class DetectOrderBrushing {
             if (shop.isPreviousBrushOrder) {
                 shop.isPreviousBrushOrder = false;
                 for (Record r : shop.recentRecords) {
-                    Integer count = shop.suspiciousTransactionCount.get(r.userId);
-                    shop.suspiciousTransactionCount.put(r.userId, count + 1);
+                    if (!shop.suspiciousUsers.containsKey(r.userId)) {
+                        shop.suspiciousUsers.put(r.userId, 1);
+                    } else {
+                        Integer count = shop.suspiciousUsers.get(r.userId);
+                        shop.suspiciousUsers.put(r.userId, count + 1);
+                    }
                 }
                 shop.recentRecords.clear();
             }
 
             // find the maximum order brushing number among users
             int max = 0;
-            for (Integer count : shop.suspiciousTransactionCount.values()) {
+            for (Integer count : shop.suspiciousUsers.values()) {
                 if (count > max) {
                     max = count;
                 }
@@ -83,11 +87,9 @@ public final class DetectOrderBrushing {
 
             // get usersId and put in ascending order
             tempSet.clear();
-            if (max > 0) {
-                for (Long userId : shop.suspiciousTransactionCount.keySet()) {
-                    if (shop.suspiciousTransactionCount.get(userId) == max)
-                        tempSet.add(userId);
-                }
+            for (Long userId : shop.suspiciousUsers.keySet()) {
+                if (shop.suspiciousUsers.get(userId) == max)
+                    tempSet.add(userId);
             }
             suspiciousShopUser.put(shop.shopId, tempSet.toArray(new Long[tempSet.size()]));
         }
