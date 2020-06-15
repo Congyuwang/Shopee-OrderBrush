@@ -10,7 +10,7 @@ Created on Sun Jun 14 09:25:17 2020
 import pandas as pd
 import numpy as np
 import os
-from orderbrush import Orderbrush as ob
+from orderbrushing import Orderbrushing as ob
 
 # %% import data
 df = pd.read_csv("data/order_brush_order.csv")

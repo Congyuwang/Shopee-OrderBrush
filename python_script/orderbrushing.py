@@ -2,13 +2,38 @@
 Created on Sun Jun 14 10:30:17 2020
 
 @author: congyuwang
+
+Orderbrush(transactionData) accepts a numpy ndarray with four columns:
+    ``0: orderId, 1: shopId, 2: userId, 3: event_time``
+
+``get_suspicious_shop_users()`` returns returns a dictionary of shopId as key,
+and a tuple of suspicious users related to this shop as value.
+If the shop is not suspicious of brushing orders, the value is None.
+
+Attributes:
+    ``ONE_HOUR``: is a constant that represents the number of seconds in an hour.
+
+Constructor:
+    an instance of the class must be initialized with an ndarray of four columns.
+
+Method:
+    ``get_suspicious_shop_users()`` returns a dictionary of shopId as key,
+    and a tuple of suspicious users related to this shop as value.
+
+Example:
+: :
+
+    transactionData = pd.read_csv("data.csv").to_numpy()
+    Orderbrush ob = new Orderbrush(transactionData)
+    suspicious_shops_and_users: dict = ob.get_suspicious_shop_users()
+
 """
 
 import numpy as np
 import os
 
 
-class Orderbrush:
+class Orderbrushing:
 
     ONE_HOUR = 3600
 
@@ -103,7 +128,7 @@ class Orderbrush:
 
             # calculate concentration rate starting from t to t + 1 hour
             nextHour = np.logical_and(
-                event_time >= t, event_time <= (t + Orderbrush.ONE_HOUR))
+                event_time >= t, event_time <= (t + Orderbrushing.ONE_HOUR))
             userId: np.ndarray = transactions[nextHour, 1]
             concentration_rate: np.int64 = self.__single_concentration__(
                 userId)
@@ -153,7 +178,7 @@ class Orderbrush:
                 # get time period for suspicious transactions:
                 # [event_time, event_time + 1hr (upper_time)]
                 suspicious_time: np.int64 = event_time[row]
-                upper_time: np.int64 = suspicious_time + Orderbrush.ONE_HOUR
+                upper_time: np.int64 = suspicious_time + Orderbrushing.ONE_HOUR
 
                 # skip, if this time period overlaps the previous time period
                 if suspicious_time <= last_upper_time:
