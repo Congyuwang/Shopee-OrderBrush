@@ -1,4 +1,4 @@
-package brushOrder;
+package orderBrushing;
 
 import java.util.Date;
 import java.util.ArrayDeque;

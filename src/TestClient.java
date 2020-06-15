@@ -3,14 +3,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.Scanner;
-
-import brushOrder.BrushOrder;
+import orderBrushing.DetectOrderBrushing;
 
 import java.util.HashMap;
 
 /**
  * The TestClient simulate actual transactions scenes, it feeds the
- * orderBrushOrder class with new transaction records in time order, and export
+ * detectOrderBrushing class with new transaction records in time order, and export
  * the suspicious transaction to output.csv file.
  */
 public class TestClient {
@@ -24,7 +23,7 @@ public class TestClient {
             }
         }
         File output = new File("out/output.csv");
-        BrushOrder orderBrushOrder = new BrushOrder();
+        DetectOrderBrushing detectOrderBrushing = new DetectOrderBrushing();
 
         try {
 
@@ -39,12 +38,12 @@ public class TestClient {
             inputScanner = new Scanner(orderedOrder);
             inputScanner.nextLine();
             while(inputScanner.hasNext()) {
-                orderBrushOrder.processNewRecord(inputScanner.nextLine());
+                detectOrderBrushing.processNewRecord(inputScanner.nextLine());
             }
             inputScanner.close();
 
             // request suspiciousShopUser
-            HashMap<Long, Long[]> suspiciousShopUser = orderBrushOrder.getSuspiciousShopUser();
+            HashMap<Long, Long[]> suspiciousShopUser = detectOrderBrushing.getSuspiciousShopUser();
 
             // write the output
             outputWriter.write("shopid,userid\n");

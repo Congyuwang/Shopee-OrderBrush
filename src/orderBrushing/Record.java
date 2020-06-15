@@ -1,4 +1,4 @@
-package brushOrder;
+package orderBrushing;
 
 import java.util.Comparator;
 import java.util.Date;
