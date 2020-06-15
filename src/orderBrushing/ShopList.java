@@ -14,26 +14,26 @@ final class ShopList {
     public static final long ONE_HOUR = 1000 * 60 * 60;
 
     // from shopId to shopInfo
-    HashMap<Long, Shop> shopList = new HashMap<>();
+    private final HashMap<Long, Shop> shopList = new HashMap<>();
 
     /**
-     * the main method to update the suspicious list, the records must be input
+     * the main method to update the suspicious list, the orders must be input
      * <em>according to time order</em>.
      *
-     * @param record put new transaction here record
+     * @param order put new transaction here order
      */
-    final void update(Record record) {
+    final void update(Order order) {
 
         // calculate one hour before the transaction time
-        final Date oneHourBefore = new Date(record.eventTime.getTime() - ONE_HOUR);
+        final Date oneHourBefore = new Date(order.eventTime.getTime() - ONE_HOUR);
 
         // initialize if this is a new shop to the list
-        if (!shopList.containsKey(record.shopId)) {
-            shopList.put(record.shopId, new Shop(record.shopId));
+        if (!shopList.containsKey(order.shopId)) {
+            shopList.put(order.shopId, new Shop(order.shopId));
         }
-        Shop shop = shopList.get(record.shopId);
+        Shop shop = shopList.get(order.shopId);
         if (shop.clock == null) {
-            shop.recentRecords.add(record);
+            shop.recentOrders.add(order);
             shop.clock = oneHourBefore;
             return;
         }
@@ -42,55 +42,55 @@ final class ShopList {
         while (shop.clock.compareTo(oneHourBefore) < 0) {
             shop.clock = new Date(shop.clock.getTime() + 1000);
             // fast forward if numberOfOrdersLastHour smaller than 3
-            if (detect(shop, record, false) < 3) {
+            if (detect(shop, order, false) < 3) {
                 shop.clock = oneHourBefore;
                 break;
             }
         }
 
-        // add new record and detect again
-        shop.recentRecords.add(record);
+        // add new order and detect again
+        shop.recentOrders.add(order);
         shop.numberOfOrdersLastHour++;
-        detect(shop, record, true);
+        detect(shop, order, true);
     }
 
     /**
-     * called when one of the two things happens: either a new record is added into
-     * recentRecords, or clock advance by one second.
+     * called when one of the two things happens: either a new order is added into
+     * recentOrders, or clock advance by one second.
      */
-    private int detect(Shop shop, Record record, boolean newRecordAdded) {
+    private final int detect(Shop shop, Order order, boolean newOrderAdded) {
 
-        // if this is a clock advancement event (no new record added):
-        // 1. remove unnecessary records from recentRecords.
+        // if this is a clock advancement event (no new order added):
+        // 1. remove unnecessary orders from recentOrders.
         // 2. if the orders in the last hour does not change, return.
         int numberOfOrdersLastHour = 0;
-        if (!newRecordAdded) {
+        if (!newOrderAdded) {
 
-            // Remove records that are older than one hour if order-brushing is not going
-            // on, but keep all records when order-brushing is going on.
+            // Remove orders that are older than one hour if order-brushing is not going
+            // on, but keep all orders when order-brushing is going on.
             if (!shop.isPreviousBrushOrder) {
-                while (!shop.recentRecords.isEmpty() && shop.recentRecords.peek().eventTime.compareTo(shop.clock) < 0) {
-                    shop.recentRecords.remove();
+                while (!shop.recentOrders.isEmpty() && shop.recentOrders.peek().eventTime.compareTo(shop.clock) < 0) {
+                    shop.recentOrders.remove();
                 }
             }
 
             // calculate numberOfOrdersLastHour
-            if (shop.recentRecords.isEmpty() || shop.recentRecords.peek().eventTime.compareTo(shop.clock) >= 0) {
-                numberOfOrdersLastHour = shop.recentRecords.size();
+            if (shop.recentOrders.isEmpty() || shop.recentOrders.peek().eventTime.compareTo(shop.clock) >= 0) {
+                numberOfOrdersLastHour = shop.recentOrders.size();
             } else {
                 int numberOfOutdatedOrders = 0;
-                for (Record r : shop.recentRecords) {
+                for (Order r : shop.recentOrders) {
                     if (r.eventTime.compareTo(shop.clock) >= 0) {
                         break;
                     }
                     numberOfOutdatedOrders++;
                 }
-                numberOfOrdersLastHour = shop.recentRecords.size() - numberOfOutdatedOrders;
+                numberOfOrdersLastHour = shop.recentOrders.size() - numberOfOutdatedOrders;
             }
 
             // If number of orders last hour does not change, there is no need for
             // recalculation since the concentration does not change, as clock-advance
-            // does not insert new records into recentRecords.
+            // does not insert new orders into recentOrders.
             if (numberOfOrdersLastHour == shop.numberOfOrdersLastHour) {
                 return numberOfOrdersLastHour;
             } else {
@@ -107,12 +107,12 @@ final class ShopList {
         }
 
         // Else if concentration < 3, but previous concentration > 3, an order-brushing
-        // period has just ended, record all suspicious activities into {@code
-        // suspiciousTransactionCount} and clear recentRecords.
+        // period has just ended, order all suspicious activities into {@code
+        // suspiciousTransactionCount} and clear recentOrders.
         if (shop.isPreviousBrushOrder) {
-            for (Record r : shop.recentRecords) {
-                // skip new record since it is not order-brushing
-                if (newRecordAdded && r.equals(record)) {
+            for (Order r : shop.recentOrders) {
+                // skip new order since it is not order-brushing
+                if (newOrderAdded && r.equals(order)) {
                     continue;
                 }
                 // increment suspicious action for corresponding users
@@ -123,10 +123,10 @@ final class ShopList {
                     shop.suspiciousUsers.put(r.userId, count + 1);
                 }
             }
-            shop.recentRecords.clear();
-            // add new record back
-            if (newRecordAdded)
-                shop.recentRecords.add(record);
+            shop.recentOrders.clear();
+            // add new order back
+            if (newOrderAdded)
+                shop.recentOrders.add(order);
             // reset isPreviousBrushOrder
             shop.isPreviousBrushOrder = false;
         }
@@ -135,7 +135,7 @@ final class ShopList {
     }
 
     /**
-     * make a deep copy of shopListCopy, pour all the remaining recent Records if
+     * make a deep copy of shopListCopy, pour all the remaining recent Orders if
      * they are deemed suspicious. Thus it does not disrupt the ShopList main
      * process. Otherwise, it would conduct an early pour.
      *
@@ -152,7 +152,7 @@ final class ShopList {
                 continue;
             }
             // if order brushing pour the remaining suspicious transactions.
-            for (Record r : shop.recentRecords) {
+            for (Order r : shop.recentOrders) {
                 if (!shop.suspiciousUsers.containsKey(r.userId)) {
                     shop.suspiciousUsers.put(r.userId, 1);
                 } else {
@@ -170,11 +170,11 @@ final class ShopList {
      */
     private static final int concentration(Shop shop) {
         HashSet<Long> users = new HashSet<>();
-        final Queue<Record> recentRecords = shop.recentRecords;
+        final Queue<Order> recentOrders = shop.recentOrders;
         final Date clock = shop.clock;
         assert clock != null;
         int transactionThisHour = 0;
-        for (Record r : recentRecords) {
+        for (Order r : recentOrders) {
             if (clock.compareTo(r.eventTime) <= 0) {
                 users.add(r.userId);
                 transactionThisHour++;
@@ -190,7 +190,7 @@ final class ShopList {
      * make a deep copy of ShopList, used for query
      */
     @Override
-    public ShopList clone() {
+    public final ShopList clone() {
         ShopList shopListCopy = new ShopList();
         for (Shop shop : shopList.values()) {
             shopListCopy.shopList.put(shop.shopId, shop.clone());

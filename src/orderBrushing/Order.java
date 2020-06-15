@@ -4,28 +4,29 @@ import java.util.Comparator;
 import java.util.Date;
 
 /**
- * This class is used for recording transaction records. It records orderId,
- * shopId, userId and eventTime, and also provides different comparators.
+ * This class represents an order. It includes the following information:
+ * orderId, shopId, userId and eventTime, and also provides different
+ * comparators. It requires orderId as a unique identifier of Orders.
  */
-public final class Record {
+public final class Order {
     public final long orderId;
     public final long shopId;
     public final long userId;
     public final Date eventTime;
-    public static final Comparator<Record> TIME_COMPARATOR = new Comparator<Record>() {
+    public static final Comparator<Order> TIME_COMPARATOR = new Comparator<Order>() {
         @Override
-        public int compare(Record o1, Record o2) {
+        public int compare(Order o1, Order o2) {
             return o1.eventTime.compareTo(o2.eventTime);
         }
     };
-    public static final Comparator<Record> TIME_COMPARATOR_REVERSED = new Comparator<Record>() {
+    public static final Comparator<Order> TIME_COMPARATOR_REVERSED = new Comparator<Order>() {
         @Override
-        public int compare(Record o1, Record o2) {
+        public int compare(Order o1, Order o2) {
             return o2.eventTime.compareTo(o1.eventTime);
         }
     };
 
-    public Record(long orderId, long shopId, long userId, Date eventTime) {
+    public Order(long orderId, long shopId, long userId, Date eventTime) {
         this.orderId = orderId;
         this.shopId = shopId;
         this.userId = userId;
@@ -37,12 +38,15 @@ public final class Record {
         return String.format("order: %d, shop: %d, user: %d, time: %s", orderId, shopId, userId, eventTime);
     }
 
+    /**
+     * The {@code equals()} method assumes that orderId is unique.
+     */
     @Override
-    public boolean equals(Object o) {
+    public final boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Record r = (Record) o;
-        if (orderId != r.orderId || shopId != r.shopId || userId != r.userId || eventTime.compareTo(r.eventTime) != 0) return false;
+        Order r = (Order) o;
+        if (orderId != r.orderId) return false;
         return true;
     }
 }

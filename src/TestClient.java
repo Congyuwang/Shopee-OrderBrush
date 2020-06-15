@@ -27,7 +27,7 @@ public class TestClient {
 
         try {
 
-            // process the records in time order
+            // process the orders in time order
             FileWriter outputWriter = new FileWriter(output);
             Scanner inputScanner;
             try {
@@ -38,7 +38,7 @@ public class TestClient {
             inputScanner = new Scanner(orderedOrder);
             inputScanner.nextLine();
             while(inputScanner.hasNext()) {
-                detectOrderBrushing.processNewRecord(inputScanner.nextLine());
+                detectOrderBrushing.processNewOrder(inputScanner.nextLine());
             }
             inputScanner.close();
 

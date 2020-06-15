@@ -15,10 +15,10 @@ import java.util.HashMap;
  * <p>
  * The class has two main APIs:
  * <ul>
- * <li>{@code void processNewRecord(String recordLine)} is invoked when a new
+ * <li>{@code void processNewOrder(String orderLine)} is invoked when a new
  * transaction occurs. Pass transaction record OrderId, ShopId, UserId, and
  * transaction time {@code (YYYY-MM-dd HH:mm:ss)} as a string separated by
- * commas to method {@code processNewRecord()} to update the system.</li>
+ * commas to method {@code processNewOrder()} to update the system.</li>
  * <li>Use {@code HashMap<Long, Long[]> getSuspiciousShopUser()} to retrieve
  * suspicious shopId and userId. The structure of the returned hashMap is is a
  * mapping from ShopId to an array of suspicious UserId. If the shop has no
@@ -34,7 +34,7 @@ public final class DetectOrderBrushing {
     private final ShopList shopList = new ShopList();
 
     /**
-     * Assume that new records come in time order, update orderBrushInformation
+     * Require that new orders come in time order, update the system
      *
      * @param line a line of string in the format of:
      *             orderId,shopId,userId,yyyy-MM-dd HH:mm:ss
@@ -43,8 +43,8 @@ public final class DetectOrderBrushing {
      *                                  parsed to long
      * @throws NumberFormatException    if the date format is invalid
      */
-    public final void processNewRecord(String recordLine) throws ParseException {
-        shopList.update(parseLine(recordLine));
+    public final void processNewOrder(String orderLine) throws ParseException {
+        shopList.update(parseLine(orderLine));
     }
 
     /**
@@ -60,7 +60,7 @@ public final class DetectOrderBrushing {
         // a temporary container used repeatedly.
         final TreeSet<Long> tempSet = new TreeSet<>();
 
-        // Must use a deep copy of shopList because this flushes the recentRecords
+        // Must use a deep copy of shopList because this flushes the recentOrders
         // earlier than possible should be.
         for (Shop shop : shopList.getShopInfo()) {
 
@@ -84,17 +84,17 @@ public final class DetectOrderBrushing {
     }
 
     /**
-     * parse a CSV string line into a transaction record .
+     * parse a CSV string line into an Order object.
      *
      * @param line a line of string in the format of:
      *             orderId,shopId,userId,yyyy-MM-dd HH:mm:ss
-     * @return Record converted from this line of string.
+     * @return Order converted from this line of string.
      * @throws IllegalArgumentException if the number of elements in the line != 4
      * @throws ParseException           if orderId, shopId, or userId cannot be
      *                                  parsed to long
      * @throws NumberFormatException    if the date format is invalid
      */
-    public static Record parseLine(String line) throws ParseException {
+    public static final Order parseLine(String line) throws ParseException {
         String[] temp = line.split(",");
         if (temp.length != 4) {
             throw new IllegalArgumentException("Wrong number of elements in line");
@@ -103,6 +103,6 @@ public final class DetectOrderBrushing {
         long shopId = Long.parseLong(temp[1].strip());
         long userId = Long.parseLong(temp[2].strip());
         Date eventTime = DATE_FORMAT.parse(temp[3].strip());
-        return new Record(orderId, shopId, userId, eventTime);
+        return new Order(orderId, shopId, userId, eventTime);
     }
 }

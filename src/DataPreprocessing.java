@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 import orderBrushing.DetectOrderBrushing;
-import orderBrushing.Record;
+import orderBrushing.Order;
 
 /**
  * Sort the events and write to new file (only need to be processed once). The
@@ -15,30 +15,30 @@ import orderBrushing.Record;
  */
 public final class DataPreprocessing {
     public static void main(String[] args) {
-        File table = new File("data/order_brush_order.csv");
-        File orderedOrder = new File("data/ordered_order.csv");
+        final File table = new File("data/order_brush_order.csv");
+        final File orderedOrder = new File("data/ordered_order.csv");
 
         try {
 
             // read original data
             Scanner scanner = new Scanner(table);
-            ArrayList<Record> records = new ArrayList<>();
+            ArrayList<Order> orders = new ArrayList<>();
             scanner.nextLine();
             while (scanner.hasNext()) {
-                Record record = DetectOrderBrushing.parseLine(scanner.nextLine());
-                records.add(record);
+                Order order = DetectOrderBrushing.parseLine(scanner.nextLine());
+                orders.add(order);
             }
             scanner.close();
-            records.sort(Record.TIME_COMPARATOR);
+            orders.sort(Order.TIME_COMPARATOR);
 
             // write into ordered log file
             FileWriter fileWriter = new FileWriter(orderedOrder);
             fileWriter.write("orderid,shopid,userid,event_time\n");
-            for (Record record : records) {
-                fileWriter.append(String.format("%d,%d,%d,%s\n", record.orderId, record.shopId, record.userId,
-                        DetectOrderBrushing.DATE_FORMAT.format(record.eventTime)));
+            for (Order order : orders) {
+                fileWriter.append(String.format("%d,%d,%d,%s\n", order.orderId, order.shopId, order.userId,
+                        DetectOrderBrushing.DATE_FORMAT.format(order.eventTime)));
             }
-            records = null;
+            orders = null;
 
             // mark the end of input stream
             fileWriter.close();

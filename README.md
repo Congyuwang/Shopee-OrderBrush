@@ -10,7 +10,7 @@ and returns suspicious order brushing users and shops.
 The project also has a python version of a slightly different
 implementation using numpy library.
 
-The java version has a score of 0.99508. 
+The java version has a score of 0.99508.
 It processes 222750 transactions within 6 seconds on a 1.6 GHz processor.
 
 The python version has a score of 0.89933.

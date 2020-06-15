@@ -3,7 +3,6 @@ package orderBrushing;
 import java.util.Date;
 import java.util.ArrayDeque;
 import java.util.HashMap;
-import java.util.Queue;
 
 /**
  * Information of shops including shop id, recent transactions, and number of
@@ -11,13 +10,10 @@ import java.util.Queue;
  */
 final class Shop {
 
-    long shopId;
-    private ArrayDeque<Record> internalRecords = new ArrayDeque<>();
+    final long shopId;
+    final ArrayDeque<Order> recentOrders;
 
-    // recent transaction records
-    Queue<Record> recentRecords = internalRecords;
-
-    // clock records the scan position (one hour before latest transaction time)
+    // clock memorize the scan position (one hour before latest transaction time)
     Date clock = null;
 
     // isPreviousBrushOrder determines whether order-brushing is on-going
@@ -31,13 +27,18 @@ final class Shop {
 
     Shop(long id) {
         shopId = id;
+        recentOrders = new ArrayDeque<>();
+    }
+
+    private Shop(long id, ArrayDeque<Order> orders) {
+        shopId = id;
+        recentOrders = orders;
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public Shop clone() {
-        Shop shopCopy = new Shop(shopId);
-        shopCopy.recentRecords = internalRecords.clone();
+    public final Shop clone() {
+        Shop shopCopy = new Shop(shopId, recentOrders.clone());
         shopCopy.clock = clock;
         shopCopy.isPreviousBrushOrder = isPreviousBrushOrder;
         shopCopy.suspiciousUsers = (HashMap<Long, Integer>) suspiciousUsers.clone();
