@@ -5,6 +5,7 @@ Created on Sun Jun 14 10:30:17 2020
 """
 
 import numpy as np
+import os
 
 
 class Orderbrush:
@@ -208,3 +209,40 @@ class Orderbrush:
             shopList[shopId] = tuple(users[counts == maxCount].tolist())
 
         return shopList
+
+
+    @staticmethod
+    def dictionary_writer(shop_users: dict, path: str, filename: str):
+        """
+        pass a dictionary, write the data into CSV as required.
+
+
+        Parameters
+        ----------
+        shop_users : ``dict``
+            dictionary in the format returned by ``get_suspicious_shop_users()``
+
+        path : ``str``
+            the folder path, DO NOT include file name. Example: ``~Desktop/``
+
+        filename : ``str``
+            the name of the file. Example ``output.csv``
+
+        """
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        with open(path + filename, "w") as f:
+            f.write("shopid,userid\n")
+            for shopId, users in shop_users.items():
+                f.write(str(shopId) + ",")
+                if users is None:
+                    f.write("0")
+                else:
+                    count = 0
+                    for user in users:
+                        if count != 0:
+                            f.write("&")
+                        f.write(str(user))
+                        count += 1
+                f.write("\n")

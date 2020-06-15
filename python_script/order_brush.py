@@ -12,32 +12,6 @@ import numpy as np
 import os
 from orderbrush import Orderbrush as ob
 
-# %% define a CSV writer
-
-
-def dictionary_writer(shop_users: dict, path: str, filename: str):
-    """
-    pass a dictionary, write the data into CSV as required.
-    """
-    if not os.path.exists(path):
-        os.makedirs(path)
-
-    with open(path + filename, "w") as f:
-        f.write("shopid,userid\n")
-        for shopId, users in shop_users.items():
-            f.write(str(shopId) + ",")
-            if users is None:
-                f.write("0")
-            else:
-                count = 0
-                for user in users:
-                    if count != 0:
-                        f.write("&")
-                    f.write(str(user))
-                    count += 1
-            f.write("\n")
-
-
 # %% import data
 df = pd.read_csv("data/order_brush_order.csv")
 
@@ -55,4 +29,4 @@ orderBrush: ob = ob(data)
 suspicious_shop_users: dict = orderBrush.get_suspicious_shop_users()
 
 # %% write the result
-dictionary_writer(suspicious_shop_users, "out/", "python_output.csv")
+ob.dictionary_writer(suspicious_shop_users, "out/", "python_output.csv")
