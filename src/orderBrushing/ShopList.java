@@ -112,7 +112,7 @@ final class ShopList {
                     continue;
                 }
                 // increment suspicious action for corresponding users
-                if (!shop.suspiciousUsers.containsKey(record.userId)) {
+                if (!shop.suspiciousUsers.containsKey(r.userId)) {
                     shop.suspiciousUsers.put(r.userId, 1);
                 } else {
                     Integer count = shop.suspiciousUsers.get(r.userId);
