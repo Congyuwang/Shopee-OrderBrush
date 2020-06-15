@@ -49,13 +49,13 @@ class Orderbrush:
 
         Parameters
         ----------
-        shopId : np.int64
+        shopId : ``np.int64``
             input shopId to look up its transaction records.
 
         Returns
         -------
-        np.ndarray
-            Three columns: 0:orderId, 1:userId and 2:event_time of a specific shop.
+        ``np.ndarray``
+            Three columns: ``0:orderId, 1:userId, 2:event_time`` of a specific shop.
 
         """
         # get all transactions of the shop
@@ -76,15 +76,15 @@ class Orderbrush:
 
         Parameters
         ----------
-        transactions : np.ndarray
+        transactions : ``np.ndarray``
             Transactions of a *SINGLE* shop.
-            Three columns: 0:orderId, 1:userId and 2:event_time of a specific shop.
+            Three columns: ``0:orderId, 1:userId, 2:event_time`` of a specific shop.
 
         Returns
         -------
-        records : np.ndarray
+        records : ``np.ndarray``
             Returns an array of concentrations
-            Four columns: 0:orderId, 1:userId, 2:concentration and 3:event_time.
+            Four columns: ``0:orderId, 1:userId, 2:concentration, 3:event_time``
 
         """
         assert transactions.shape[1] == 3
@@ -115,19 +115,20 @@ class Orderbrush:
 
     def __get_suspicious_orders__(self, transactions: np.ndarray) -> list:
         """
-        get suspicious orders from the transaction records of a particular shop
+        get suspicious orders from the transaction records of a specific shop
+        based on the transaction records of this shop.
 
 
         Parameters
         ----------
-        transactions : np.ndarray
+        transactions : ``np.ndarray``
             Transactions of a *SINGLE* shop.
-            Three columns: 0:orderId, 1:userId and 2:event_time of a specific shop.
+            Three columns: ``0:orderId, 1:userId, 2:event_time`` of a specific shop.
 
         Returns
         -------
-        list
-            List of suspicious orders: (orderId, userId) tuples for a specific shop.
+        ``list``
+            List of suspicious orders: ``(orderId, userId)`` tuples for a specific shop.
 
         """
         assert transactions.shape[1] == 3
@@ -142,17 +143,18 @@ class Orderbrush:
         # remember the last upper_time
         last_upper_time: np.int64 = 0
 
-        # for each suspicious
+        # for each transaction of this shop
         for row in range(cons.shape[0]):
 
             # if concentration reaches 3
             if cons[row, 2] >= 3:
 
-                # get time period for suspicious transactions
+                # get time period for suspicious transactions:
+                # [event_time, event_time + 1hr (upper_time)]
                 suspicious_time: np.int64 = event_time[row]
                 upper_time: np.int64 = suspicious_time + Orderbrush.ONE_HOUR
 
-                # skip if this time period covers the previous time period
+                # skip, if this time period overlaps the previous time period
                 if suspicious_time <= last_upper_time:
                     continue
 
@@ -175,9 +177,9 @@ class Orderbrush:
 
         Returns
         -------
-        set
-            Set of suspicious shop and users in a dictionary {shopId : (userId1, userId2)}
-            or {shopId : None} if no suspicious transaction detected.
+        ``dict``
+            Suspicious shop and users in a dictionary ``{shopId : (userId1, userId2, ...)}``
+            or ``{shopId : None}`` if no suspicious transaction detected.
 
         """
         shopList: dict = dict()
