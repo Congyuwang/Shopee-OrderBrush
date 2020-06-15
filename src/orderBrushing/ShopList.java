@@ -41,7 +41,11 @@ final class ShopList {
         // scan forward to detect high concentration till latest time
         while (shop.clock.compareTo(oneHourBefore) < 0) {
             shop.clock = new Date(shop.clock.getTime() + 1000);
-            detect(shop, record, false);
+            // fast forward if numberOfOrdersLastHour smaller than 3
+            if (detect(shop, record, false) < 3) {
+                shop.clock = oneHourBefore;
+                break;
+            }
         }
 
         // add new record and detect again
@@ -54,11 +58,12 @@ final class ShopList {
      * called when one of the two things happens: either a new record is added into
      * recentRecords, or clock advance by one second.
      */
-    private void detect(Shop shop, Record record, boolean newRecordAdded) {
+    private int detect(Shop shop, Record record, boolean newRecordAdded) {
 
         // if this is a clock advancement event (no new record added):
         // 1. remove unnecessary records from recentRecords.
         // 2. if the orders in the last hour does not change, return.
+        int numberOfOrdersLastHour = 0;
         if (!newRecordAdded) {
 
             // Remove records that are older than one hour if order-brushing is not going
@@ -70,7 +75,6 @@ final class ShopList {
             }
 
             // calculate numberOfOrdersLastHour
-            int numberOfOrdersLastHour = 0;
             if (shop.recentRecords.isEmpty() || shop.recentRecords.peek().eventTime.compareTo(shop.clock) >= 0) {
                 numberOfOrdersLastHour = shop.recentRecords.size();
             } else {
@@ -88,7 +92,7 @@ final class ShopList {
             // recalculation since the concentration does not change, as clock-advance
             // does not insert new records into recentRecords.
             if (numberOfOrdersLastHour == shop.numberOfOrdersLastHour) {
-                return;
+                return numberOfOrdersLastHour;
             } else {
                 // update shop.numberOfOrdersLastHour
                 shop.numberOfOrdersLastHour = numberOfOrdersLastHour;
@@ -99,7 +103,7 @@ final class ShopList {
         // if the concentration >= 3, enter isPreviousBrushOrder = true period
         if (concentration(shop) >= 3) {
             shop.isPreviousBrushOrder = true;
-            return;
+            return numberOfOrdersLastHour;
         }
 
         // Else if concentration < 3, but previous concentration > 3, an order-brushing
@@ -126,6 +130,8 @@ final class ShopList {
             // reset isPreviousBrushOrder
             shop.isPreviousBrushOrder = false;
         }
+
+        return numberOfOrdersLastHour;
     }
 
     /**
