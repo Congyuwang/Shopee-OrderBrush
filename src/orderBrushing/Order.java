@@ -5,26 +5,25 @@ import java.util.Date;
 
 /**
  * This class represents an order. It includes the following information:
- * orderId, shopId, userId and eventTime, and also provides different
- * comparators. It requires orderId as a unique identifier of Orders.
+ * <ul>
+ * <li>orderId: {@code long}</li>
+ * <li>shopId: {@code long}</li>
+ * <li>userId: {@code long}</li>
+ * <li>eventTime: {@code java.util.Date}</li>
+ * </ul>
+ * The class includes a comparator that compares orders based on transaction
+ * time.
+ * <p>
+ * Note: {@code orderId} <b>must be a unique identifier of Orders</b>.
+ * </p>
  */
 public final class Order {
+
     public final long orderId;
     public final long shopId;
     public final long userId;
     public final Date eventTime;
-    public static final Comparator<Order> TIME_COMPARATOR = new Comparator<Order>() {
-        @Override
-        public int compare(Order o1, Order o2) {
-            return o1.eventTime.compareTo(o2.eventTime);
-        }
-    };
-    public static final Comparator<Order> TIME_COMPARATOR_REVERSED = new Comparator<Order>() {
-        @Override
-        public int compare(Order o1, Order o2) {
-            return o2.eventTime.compareTo(o1.eventTime);
-        }
-    };
+    public static final Comparator<Order> TIME_COMPARATOR = Comparator.comparing(o -> o.eventTime);
 
     public Order(long orderId, long shopId, long userId, Date eventTime) {
         this.orderId = orderId;
@@ -46,7 +45,6 @@ public final class Order {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Order r = (Order) o;
-        if (orderId != r.orderId) return false;
-        return true;
+        return orderId == r.orderId;
     }
 }

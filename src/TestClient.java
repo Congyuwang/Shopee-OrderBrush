@@ -30,16 +30,17 @@ public class TestClient {
             // process the orders in time order
             FileWriter outputWriter = new FileWriter(output);
             Scanner inputScanner;
-            try {
-                inputScanner = new Scanner(orderedOrder);
-            } catch (IOException e) {
+            if (!orderedOrder.exists()) {
                 DataPreprocessing.main(null);
             }
             inputScanner = new Scanner(orderedOrder);
             inputScanner.nextLine();
-            while(inputScanner.hasNext()) {
+
+            // Simulate actual transactions, read new order in time order.
+            while (inputScanner.hasNext()) {
                 detectOrderBrushing.processNewOrder(inputScanner.nextLine());
             }
+
             inputScanner.close();
 
             // request suspiciousShopUser
@@ -65,6 +66,7 @@ public class TestClient {
                 outputWriter.append('\n');
             }
             outputWriter.close();
+
         } catch (IOException e) {
             System.out.println("File not found!");
         } catch (ParseException e2) {

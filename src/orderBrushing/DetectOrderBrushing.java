@@ -20,9 +20,9 @@ import java.util.HashMap;
  * transaction time {@code (YYYY-MM-dd HH:mm:ss)} as a string separated by
  * commas to method {@code processNewOrder()} to update the system.</li>
  * <li>Use {@code HashMap<Long, Long[]> getSuspiciousShopUser()} to retrieve
- * suspicious shopId and userId. The structure of the returned hashMap is is a
+ * suspicious shopId and userId. The structure of the returned hashMap is a
  * mapping from ShopId to an array of suspicious UserId. If the shop has no
- * suspicious transactions, corresponding the array is empty.</li>
+ * suspicious transactions, the corresponding array is empty.</li>
  * </ul>
  * </p>
  */
@@ -30,26 +30,28 @@ public final class DetectOrderBrushing {
 
     public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-    // the main data recorded
+    // the main data of the class
     private final ShopList shopList = new ShopList();
 
     /**
-     * Require that new orders come in time order, update the system
+     * Update the system. Require new orders to come <em>in time order</em>. Should
+     * be invoked each time a new order occurs.
      *
-     * @param line a line of string in the format of:
-     *             orderId,shopId,userId,yyyy-MM-dd HH:mm:ss
+     * @param orderLine a line of string in the format of:
+     *                  {@code orderId,shopId,userId,yyyy-MM-dd HH:mm:ss}
      * @throws IllegalArgumentException if the number of elements in the line != 4
-     * @throws ParseException           if orderId, shopId, or userId cannot be
-     *                                  parsed to long
-     * @throws NumberFormatException    if the date format is invalid
+     * @throws ParseException           if the date format is invalid
+     * @throws NumberFormatException    if orderId, shopId, or userId are illegal
      */
     public final void processNewOrder(String orderLine) throws ParseException {
         shopList.update(parseLine(orderLine));
     }
 
     /**
-     * retrieve suspicious shopId and top suspicious userId related to order
-     * brushing in a {@code HashMap<Long, Long[]>}.
+     * Retrieve suspicious shopId and userId in a {@code HashMap<Long, Long[]>}. The
+     * Keys are shopId, and the Values are arrays of userId who are suspicious of
+     * conducting the highest number of order brushing. If the shop is not deemed as
+     * suspicious, the array of suspicious users has length 0.
      *
      * @return a {@code Hashmap} from shopId to an array of suspicious userId
      */
@@ -78,23 +80,22 @@ public final class DetectOrderBrushing {
                 if (shop.suspiciousUsers.get(userId) == max)
                     tempSet.add(userId);
             }
-            suspiciousShopUser.put(shop.shopId, tempSet.toArray(new Long[tempSet.size()]));
+            suspiciousShopUser.put(shop.shopId, tempSet.toArray(new Long[0]));
         }
         return suspiciousShopUser;
     }
 
     /**
-     * parse a CSV string line into an Order object.
+     * This is a utility method to parse a string into an Order object.
      *
      * @param line a line of string in the format of:
-     *             orderId,shopId,userId,yyyy-MM-dd HH:mm:ss
+     *             {@code orderId,shopId,userId,yyyy-MM-dd HH:mm:ss}
      * @return Order converted from this line of string.
      * @throws IllegalArgumentException if the number of elements in the line != 4
-     * @throws ParseException           if orderId, shopId, or userId cannot be
-     *                                  parsed to long
-     * @throws NumberFormatException    if the date format is invalid
+     * @throws ParseException           if the date format is invalid
+     * @throws NumberFormatException    if orderId, shopId, or userId are illegal
      */
-    public static final Order parseLine(String line) throws ParseException {
+    public static Order parseLine(String line) throws ParseException {
         String[] temp = line.split(",");
         if (temp.length != 4) {
             throw new IllegalArgumentException("Wrong number of elements in line");

@@ -38,7 +38,6 @@ public final class DataPreprocessing {
                 fileWriter.append(String.format("%d,%d,%d,%s\n", order.orderId, order.shopId, order.userId,
                         DetectOrderBrushing.DATE_FORMAT.format(order.eventTime)));
             }
-            orders = null;
 
             // mark the end of input stream
             fileWriter.close();
