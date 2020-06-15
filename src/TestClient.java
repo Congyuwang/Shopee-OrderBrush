@@ -3,8 +3,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.Scanner;
+
+import brushOrder.BrushOrder;
+
 import java.util.HashMap;
-import orderBrush.OrderBrushOrder;
 
 /**
  * The TestClient simulate actual transactions scenes, it feeds the
@@ -22,7 +24,7 @@ public class TestClient {
             }
         }
         File output = new File("out/output.csv");
-        OrderBrushOrder orderBrushOrder = new OrderBrushOrder();
+        BrushOrder orderBrushOrder = new BrushOrder();
 
         try {
 

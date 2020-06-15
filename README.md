@@ -14,7 +14,7 @@ The java version has a score of 99.508%.
 
 The python version has a score of 89.933%.
 
-## OrderBrushOrder
+## BrushOrder class
 
 Only memorize the recent one hour orders,
 and thus is quite memory efficient,

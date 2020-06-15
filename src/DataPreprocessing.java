@@ -4,8 +4,9 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Scanner;
-import orderBrush.OrderBrushOrder;
-import orderBrush.Record;
+
+import brushOrder.BrushOrder;
+import brushOrder.Record;
 
 /**
  * Sort the events and write to new file (only need to be processed once). The
@@ -24,7 +25,7 @@ public final class DataPreprocessing {
             ArrayList<Record> records = new ArrayList<>();
             scanner.nextLine();
             while (scanner.hasNext()) {
-                Record record = OrderBrushOrder.parseLine(scanner.nextLine());
+                Record record = BrushOrder.parseLine(scanner.nextLine());
                 records.add(record);
             }
             scanner.close();
@@ -35,7 +36,7 @@ public final class DataPreprocessing {
             fileWriter.write("orderid,shopid,userid,event_time\n");
             for (Record record : records) {
                 fileWriter.append(String.format("%d,%d,%d,%s\n", record.orderId, record.shopId, record.userId,
-                        OrderBrushOrder.DATE_FORMAT.format(record.eventTime)));
+                        BrushOrder.DATE_FORMAT.format(record.eventTime)));
             }
             records = null;
 

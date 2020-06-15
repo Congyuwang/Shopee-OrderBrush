@@ -1,4 +1,4 @@
-package orderBrush;
+package brushOrder;
 
 import java.util.Date;
 import java.util.TreeSet;
@@ -26,7 +26,7 @@ import java.util.HashMap;
  * </ul>
  * </p>
  */
-public final class OrderBrushOrder {
+public final class BrushOrder {
 
     public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
