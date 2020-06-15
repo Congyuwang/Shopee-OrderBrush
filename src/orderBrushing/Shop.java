@@ -8,7 +8,7 @@ import java.util.HashMap;
  * Information of shops including shopId, recentOrders, and number of suspicious
  * Transactions related to each user.
  */
-final class Shop {
+final class Shop implements Cloneable {
 
     /*** fields of shop information ***/
 
