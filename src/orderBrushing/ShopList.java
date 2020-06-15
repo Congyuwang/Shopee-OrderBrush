@@ -22,7 +22,7 @@ final class ShopList {
      *
      * @param record put new transaction here record
      */
-    public final void update(Record record) {
+    final void update(Record record) {
 
         // calculate one hour before the transaction time
         final Date oneHourBefore = new Date(record.eventTime.getTime() - ONE_HOUR);
@@ -135,10 +135,34 @@ final class ShopList {
     }
 
     /**
-     * return an iterable of shopList
+     * make a deep copy of shopListCopy, pour all the remaining recent Records if
+     * they are deemed suspicious. Thus it does not disrupt the ShopList main
+     * process. Otherwise, it would conduct an early pour.
+     *
+     * @return a {@code Collection} containing all shop information.
      */
-    public final Collection<Shop> getShopInfo() {
-        return shopList.values();
+    final Collection<Shop> getShopInfo() {
+        // make a deep copy
+        HashMap<Long, Shop> shopListCopy = clone().shopList;
+
+        // for each shop
+        for (Shop shop : shopListCopy.values()) {
+            // if not order brushing, skip.
+            if (!shop.isPreviousBrushOrder) {
+                continue;
+            }
+            // if order brushing pour the remaining suspicious transactions.
+            for (Record r : shop.recentRecords) {
+                if (!shop.suspiciousUsers.containsKey(r.userId)) {
+                    shop.suspiciousUsers.put(r.userId, 1);
+                } else {
+                    Integer count = shop.suspiciousUsers.get(r.userId);
+                    shop.suspiciousUsers.put(r.userId, count + 1);
+                }
+            }
+        }
+
+        return shopListCopy.values();
     }
 
     /**

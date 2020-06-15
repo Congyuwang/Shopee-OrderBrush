@@ -62,20 +62,7 @@ public final class DetectOrderBrushing {
 
         // Must use a deep copy of shopList because this flushes the recentRecords
         // earlier than possible should be.
-        for (Shop shop : shopList.clone().getShopInfo()) {
-            // finish the remaining
-            if (shop.isPreviousBrushOrder) {
-                shop.isPreviousBrushOrder = false;
-                for (Record r : shop.recentRecords) {
-                    if (!shop.suspiciousUsers.containsKey(r.userId)) {
-                        shop.suspiciousUsers.put(r.userId, 1);
-                    } else {
-                        Integer count = shop.suspiciousUsers.get(r.userId);
-                        shop.suspiciousUsers.put(r.userId, count + 1);
-                    }
-                }
-                shop.recentRecords.clear();
-            }
+        for (Shop shop : shopList.getShopInfo()) {
 
             // find the maximum order brushing number among users
             int max = 0;
