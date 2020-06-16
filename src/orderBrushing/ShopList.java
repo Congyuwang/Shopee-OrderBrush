@@ -26,11 +26,34 @@ import java.util.Queue;
  */
 final class ShopList {
 
-    // number of milliseconds in an hour
-    public static final long ONE_HOUR = 1000 * 60 * 60;
+    // model parameters
+    private long window;
+    private long increment;
+    private int concentrationThreshold;
 
     // map from shopId to Shop
-    private final HashMap<Long, Shop> shopList = new HashMap<>();
+    private final HashMap<Long, Shop> shopList;
+
+    /**
+     * Construct a ShopList with default parameters: deem concentration greater than
+     * {@code concentrationThreshold} in {@code window} milliseconds as suspicious
+     * order brushing.
+     *
+     * @param window                 the length of window for calculating concentration.
+     * @param concentrationThreshold the smallest concentration to be deemed as
+     *                               suspicious transactions.
+     * @param increment              the increment of scan. The smaller then more
+     *                               accurate. recommended to be set as the smallest
+     *                               unit time in the system.
+     * @throws IllegalArgumentException if increment <= 0 or if window <= 0 or
+     *                                  concentrationThreshold <= 0
+     */
+    ShopList(long window, int concentrationThreshold, long increment) {
+        this.window = 1000 * 60 * 60;
+        this.concentrationThreshold = 3;
+        this.increment = increment;
+        this.shopList = new HashMap<>();
+    }
 
     /**
      * the main method to update the suspicious list, the orders must be input
@@ -41,7 +64,7 @@ final class ShopList {
     final void update(Order order) {
 
         // calculate one hour before the latest transaction time
-        final Date oneHourBefore = new Date(order.eventTime.getTime() - ONE_HOUR);
+        final Date windowLowerBound = new Date(order.eventTime.getTime() - window);
 
         // initialize if this is a new shop to the list
         if (!shopList.containsKey(order.shopId)) {
@@ -50,20 +73,21 @@ final class ShopList {
         Shop shop = shopList.get(order.shopId);
         if (shop.clock == null) {
             shop.recentOrders.add(order);
-            shop.clock = oneHourBefore;
+            shop.clock = windowLowerBound;
             return;
         }
 
         // scan forward by one second until latest time
-        while (shop.clock.compareTo(oneHourBefore) < 0) {
+        while (shop.clock.compareTo(windowLowerBound) < 0) {
 
-            shop.clock = new Date(shop.clock.getTime() + 1000);
-
-            // fast forward if numberOfOrdersLastHour is smaller than 3
-            if (detect(shop, order, false) < 3) {
-                shop.clock = oneHourBefore;
+            // fast forward if numberOfOrdersLastHour is smaller than concentrationThreshold
+            if (detect(shop, order, false) < concentrationThreshold) {
+                shop.clock = windowLowerBound;
                 break;
             }
+
+            // increment time
+            shop.clock = new Date(shop.clock.getTime() + increment);
         }
 
         // add new order and detect again
@@ -121,20 +145,21 @@ final class ShopList {
             shop.numberOfOrdersLastHour = numberOfOrdersLastHour;
         }
 
-        // if the concentration >= 3, let isPreviousBrushOrder = true and return.
-        if (concentration(shop) >= 3) {
+        // if the concentration >= concentrationThreshold, let isPreviousBrushOrder = true and return.
+        if (concentration(shop) >= concentrationThreshold) {
             shop.isPreviousBrushOrder = true;
             return numberOfOrdersLastHour;
         }
 
-        // if concentration < 3, and previous concentration < 3, return.
+        // if concentration < concentrationThreshold, and previous concentration < 3, return.
         if (!shop.isPreviousBrushOrder) {
             return numberOfOrdersLastHour;
         }
 
-        // if concentration < 3, and previous concentration >= 3, an order-brushing
-        // period has just ended. Pour all suspicious activities into {@code
-        // suspiciousTransactionCount} and clear recentOrders.
+        // if concentration < concentrationThreshold, and previous concentration >=
+        // concentrationThreshold, an order-brushing period has just ended. Pour all
+        // suspicious activities into {@code suspiciousTransactionCount} and clear
+        // recentOrders.
         for (Order r : shop.recentOrders) {
 
             // skip the new order since it is occurs when concentration < 3
@@ -222,10 +247,34 @@ final class ShopList {
      * make a deep copy of ShopList, used for query
      */
     public final ShopList deepCopy() {
-        ShopList shopListCopy = new ShopList();
+        ShopList shopListCopy = new ShopList(window, concentrationThreshold, increment);
         for (Shop shop : shopList.values()) {
             shopListCopy.shopList.put(shop.shopId, shop.clone());
         }
         return shopListCopy;
+    }
+
+    long getWindow() {
+        return window;
+    }
+
+    long getIncrement() {
+        return increment;
+    }
+
+    int getConcentrationThreshold() {
+        return concentrationThreshold;
+    }
+
+    void setWindow(long window) {
+        this.window = window;
+    }
+
+    void setIncrement(long increment) {
+        this.increment = increment;
+    }
+
+    void setConcentrationThreshold(int concentrationThreshold) {
+        this.concentrationThreshold = concentrationThreshold;
     }
 }

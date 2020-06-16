@@ -2,6 +2,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -17,6 +18,7 @@ public final class DataPreprocessing {
     public static void main(String[] args) {
         final File table = new File("data/order_brush_order.csv");
         final File orderedOrder = new File("data/ordered_order.csv");
+        final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
         try {
 
@@ -25,7 +27,7 @@ public final class DataPreprocessing {
             ArrayList<Order> orders = new ArrayList<>();
             scanner.nextLine();
             while (scanner.hasNext()) {
-                Order order = DetectOrderBrushing.parseLine(scanner.nextLine());
+                Order order = DetectOrderBrushing.parseLine(scanner.nextLine(), dateFormat);
                 orders.add(order);
             }
             scanner.close();
@@ -36,7 +38,7 @@ public final class DataPreprocessing {
             fileWriter.write("orderid,shopid,userid,event_time\n");
             for (Order order : orders) {
                 fileWriter.append(String.format("%d,%d,%d,%s\n", order.orderId, order.shopId, order.userId,
-                        DetectOrderBrushing.DATE_FORMAT.format(order.eventTime)));
+                        dateFormat.format(order.eventTime)));
             }
 
             // mark the end of input stream
