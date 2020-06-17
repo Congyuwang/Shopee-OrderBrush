@@ -38,13 +38,16 @@ public final class Order {
     }
 
     /**
-     * The {@code equals()} method assumes that orderId is unique.
+     * The {@code equals()} method assumes that orderId is unique, but it also
+     * checks other fields for comparison.
      */
     @Override
     public final boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         Order r = (Order) o;
-        return orderId == r.orderId;
+        return orderId == r.orderId && userId == r.userId && shopId == r.shopId && eventTime.equals(r.eventTime);
     }
 }
