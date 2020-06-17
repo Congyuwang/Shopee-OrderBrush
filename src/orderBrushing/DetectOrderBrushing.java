@@ -134,9 +134,10 @@ public final class DetectOrderBrushing {
      * more number of order brushing than threshold. If the shop is not deemed as
      * suspicious, the array of suspicious users has length 0.
      *
-     * @param threshold the smallest number of suspicious transactions for each user
+     * @param threshold the smallest number of suspicious transactions for each
+     *                  user. If threshold is set smaller than or equal to 1, all
+     *                  suspicious users will be returned.
      * @return a {@code Hashmap} from shopId to an array of suspicious userId
-     * @throws IllegalArgumentException if threshold i < 1.
      */
     public final HashMap<Long, Long[]> getAllSuspiciousShopUser(int threshold) {
 
